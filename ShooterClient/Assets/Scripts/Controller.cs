@@ -1,9 +1,10 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Controller : MonoBehaviour
 {
-    [SerializeField] Player _player;
+    [SerializeField] PlayerCharacter _player;
     
     void Update()
     {
@@ -11,5 +12,17 @@ public class Controller : MonoBehaviour
         float v = Input.GetAxisRaw("Vertical");
 
         _player.SetInput(h, v);
+
+        SendMove();
+    }
+
+    private void SendMove()
+    {
+        _player.GetMoveInfo(out Vector3 position);
+        Dictionary<string, object> data = new Dictionary<string, object>()
+        {
+            {"x",position.x },{"y",position.z}
+        };
+        MultiplayerManager.Instance.SendMessage("move",data);
     }
 }
