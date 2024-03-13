@@ -60,13 +60,16 @@ public class PlayerCharacter : Character
         _rotateY = 0;
     }
 
-    public void GetMoveInfo(out Vector3 position, out Vector3 velocity, out float rotateX, out float rotateY)
+    public void GetMoveInfo(out Vector3 position, out Vector3 velocity, out float rotateX, out float rotateY, out float angVelocityY)
     {
         position = transform.position;
         velocity = _rigidbody.velocity;
 
         rotateX = _head.transform.localEulerAngles.x;
         rotateY = transform.localEulerAngles.y;
+
+        //сглаживание поворота
+        angVelocityY = _rigidbody.angularVelocity.y;//body
     }
 
     public void Jump()

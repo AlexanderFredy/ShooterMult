@@ -61,6 +61,9 @@ public class EnemyController : MonoBehaviour
         Vector3 position = _enemy.targetPosition;
         Vector3 velocity = _enemy.velocity;
 
+        float rotationY = _enemy.targetRotationY;
+        Vector3 angVelocity = _enemy.angVelocity;
+
         foreach (DataChange change in changes) 
         {
             switch (change.Field)
@@ -84,10 +87,13 @@ public class EnemyController : MonoBehaviour
                     velocity.z = (float)change.Value;
                     break;
                 case "rX":
-                    _enemy.SetRotateX((float)change.Value);
+                    _enemy.SetRotateHeadX((float)change.Value);
                     break;
                 case "rY":
-                    _enemy.SetRotateY((float)change.Value);
+                    rotationY = (float)change.Value;
+                    break;
+                case "avY":
+                    angVelocity.y = (float)change.Value;
                     break;
                 default:
                     Debug.LogWarning("Dont use: " + change.Field);
@@ -96,5 +102,6 @@ public class EnemyController : MonoBehaviour
         }
 
         _enemy.SetMovement(position,velocity, AvarageInterval);
+        _enemy.SetRotateBodyY(rotationY,angVelocity, AvarageInterval);
     }
 }
