@@ -390,7 +390,7 @@ GameObject:
   - component: {fileID: 1494174298}
   - component: {fileID: 1494174297}
   - component: {fileID: 1494174296}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -514,7 +514,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _colyseusSettings: {fileID: 11400000, guid: f59f0c79637ec8c41a698a4b373263b6, type: 2}
-  _player: {fileID: 4883807324732570248, guid: 5f29d6295ff28e54abe12c788cf4be9c, type: 3}
+  _player: {fileID: 8089267464779062172, guid: 5f29d6295ff28e54abe12c788cf4be9c, type: 3}
   _enemy: {fileID: 5442482853275340999, guid: 1386bcaa68809164eb13bef5302ac065, type: 3}
 --- !u!4 &1691571920
 Transform:

@@ -2,49 +2,46 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyCharacter : MonoBehaviour
+public class EnemyCharacter : Character
 {
-    private float _lastTimeNetworkUpdatePosition = 0.02f;
-    private PositionTime[] _positionsInTime = new PositionTime[2];
+    [SerializeField] private Transform _head;
+    public Vector3 targetPosition { get; set; } = Vector3.zero;
+    private float _velocityMagnitude = 0f;
 
-    private void Awake()
+    private void Start()
     {
-        _positionsInTime[0].Position = transform.position.Round(2);
-        _positionsInTime[0].Time = Time.time;
-
-        _positionsInTime[1].Position = transform.position.Round(2);
-        _positionsInTime[1].Time = Time.time + 1f;
+        targetPosition = transform.position;
     }
 
     private void Update()
     {
-        //print(Time.time - _lastTimeNetworkUpdatePosition);
-
-        if (Time.time - _lastTimeNetworkUpdatePosition > 0.02f)
+        if (_velocityMagnitude > .1f)
         {
-            var currrentSpeed = (_positionsInTime[1].Position - _positionsInTime[0].Position)/(_positionsInTime[1].Time - _positionsInTime[0].Time);
-            transform.position += currrentSpeed * Time.deltaTime;
+            float maxDistance = _velocityMagnitude * Time.deltaTime;
+            transform.position = Vector3.MoveTowards(transform.position, targetPosition, maxDistance);
         }
+        else
+            transform.position = targetPosition;
     }
 
-    public void SetPosition(Vector3 position)
+    public void SetSpeed(float value) => speed = value;
+
+    public void SetMovement(in Vector3 position, in Vector3 velocity, in float avarageInterval)
     {
-        transform.position = position;      
+        targetPosition = position + (velocity*avarageInterval);
+        _velocityMagnitude = velocity.magnitude;
+        
+        this.velocity = velocity;
     }
 
-    public void UpdateNetworkPositions()
+    public void SetRotateX(float value)
     {
-        _positionsInTime[0] = _positionsInTime[1];
-        _positionsInTime[1].Position = transform.position.Round(2);
-        _positionsInTime[1].Time = Time.time;
-
-        _lastTimeNetworkUpdatePosition = Time.time;
+        _head.localEulerAngles = new Vector3(value, 0, 0);
     }
 
-    private struct PositionTime
+    public void SetRotateY(float value)
     {
-        public Vector3 Position;
-        public float Time;
+        transform.localEulerAngles = new Vector3(0, value, 0);
     }
 
 }

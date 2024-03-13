@@ -5,29 +5,96 @@ using UnityEngine;
 public class EnemyController : MonoBehaviour
 {
     [SerializeField] EnemyCharacter _enemy;
+    [SerializeField] EnemyGun _gun;
+    private List<float> _recievedTimeInterval = new List<float> { 0,0,0,0,0};
+    private float _lastResiveTime = 0f;
+    private Player _player;
+
+    private float AvarageInterval
+    {
+        get
+        {
+            float totalIntervalTime = 0;
+            for (int i = 0; i < _recievedTimeInterval.Count; i++)
+            {
+                totalIntervalTime += _recievedTimeInterval[i];
+            }
+
+            return totalIntervalTime / _recievedTimeInterval.Count;
+        }
+    }
+
+    public void Init(Player player)
+    {
+        _player = player;
+        _enemy.SetSpeed(player.speed);
+        _player.OnChange += OnChange;
+    }
+
+    public void Shoot(in ShootInfo info)
+    {
+        Vector3 position = new Vector3(info.pX, info.pY, info.pZ);
+        Vector3 velocity = new Vector3(info.dX, info.dY, info.dZ);
+
+        _gun.Shoot(position,velocity);
+    }
+
+    public void Destroy()
+    {
+        _player.OnChange -= OnChange;
+        Destroy(gameObject);
+    }
+
+    private void SaveRecievedTime()
+    {
+        float interval = Time.time - _lastResiveTime;
+        _lastResiveTime = Time.time;
+
+        _recievedTimeInterval.Add(interval);
+        _recievedTimeInterval.RemoveAt(0);
+    }
 
     internal void OnChange(List<DataChange> changes)
     {
-        Vector3 position = transform.position;
+        SaveRecievedTime();
         
+        Vector3 position = _enemy.targetPosition;
+        Vector3 velocity = _enemy.velocity;
+
         foreach (DataChange change in changes) 
         {
             switch (change.Field)
             {
-                case "x":
+                case "pX":
                     position.x = (float)change.Value;
                     break;
-                case "y":
+                case "pY":
+                    position.y = (float)change.Value;
+                    break;
+                case "pZ":
                     position.z = (float)change.Value;
                     break;
+                case "vX":
+                    velocity.x = (float)change.Value;
+                    break;
+                case "vY":
+                    velocity.y = (float)change.Value;
+                    break;
+                case "vZ":
+                    velocity.z = (float)change.Value;
+                    break;
+                case "rX":
+                    _enemy.SetRotateX((float)change.Value);
+                    break;
+                case "rY":
+                    _enemy.SetRotateY((float)change.Value);
+                    break;
                 default:
-                    Debug.Log("Dont use: " + change.Field);
+                    Debug.LogWarning("Dont use: " + change.Field);
                     break;
             }
         }
 
-        transform.position = position;
-
-        _enemy.UpdateNetworkPositions();
+        _enemy.SetMovement(position,velocity, AvarageInterval);
     }
 }
