@@ -24,17 +24,18 @@ public class Controller : MonoBehaviour
         float mouseY = Input.GetAxis("Mouse Y");
 
         bool isShoot = Input.GetMouseButton(0);
-        bool space = Input.GetKeyDown(KeyCode.Space);
+        bool jump = Input.GetKeyDown(KeyCode.Space);
+        bool sitdown = Input.GetKeyDown(KeyCode.LeftControl);
+        bool standUp = Input.GetKeyUp(KeyCode.LeftControl);
 
         _player.SetInput(h, v, mouseX * _mouseSensetivity);
         _player.RotateX(-mouseY * _mouseSensetivity);
 
-        if (space) _player.Jump();
-        if (isShoot && _gun.TryShoot(out ShootInfo shootInfo))
-        {
-            //_gun.Shoot();
-            SendShoot(ref shootInfo);
-        }
+        if (jump && !sitdown) _player.Jump();
+        if (isShoot && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
+        
+        if (sitdown) _player.SitDown();
+        if (standUp) _player.StandUp();
 
         SendMove();
     }

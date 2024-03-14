@@ -1,9 +1,10 @@
 
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerCharacter : Character
-{
+{   
     [SerializeField] private Rigidbody _rigidbody;
     [SerializeField] private Transform _head;
     [SerializeField] private Transform _cameraPoint;
@@ -80,4 +81,7 @@ public class PlayerCharacter : Character
         _jumpTime = Time.time;
         _rigidbody.AddForce(0, _jumpForce, 0, ForceMode.VelocityChange);
     }
+
+    internal void SitDown() => Sit?.Invoke();
+    internal void StandUp() => Stand?.Invoke();
 }

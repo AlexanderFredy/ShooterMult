@@ -53,6 +53,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <speed>k__BackingField: 7
+  _body: {fileID: 1374901396681793391}
   _rigidbody: {fileID: -8914532626755531917}
   _head: {fileID: 5155715059321417789}
   _cameraPoint: {fileID: 9029925428740924391}
@@ -108,6 +109,8 @@ MonoBehaviour:
   _checkFly: {fileID: 6403306476813767565}
   _animator: {fileID: 2261412328194013205}
   _character: {fileID: 8089267464779062172}
+  _seatOffset: 0.4
+  _seatSpeed: 1
 --- !u!54 &-8914532626755531917
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -196,6 +199,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5029415585706339434}
     m_Modifications:
+    - target: {fileID: 113841687929738735, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 113841687929738735, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.3
+      objectReference: {fileID: 0}
     - target: {fileID: 985658863290395091, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.7071068
@@ -220,6 +231,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3651717443830662649, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: ffad98b3449adda4aae5bf6fc46e583a, type: 2}
     - target: {fileID: 3783090178872861316, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
       propertyPath: m_Name
       value: NewCharacter
@@ -268,7 +283,8 @@ PrefabInstance:
       propertyPath: m_LocalPosition.x
       value: 0.2644517
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3651717443830662649, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -276,6 +292,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6342687365958342058}
   m_SourcePrefab: {fileID: 100100000, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+--- !u!4 &1374901396681793391 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 113841687929738735, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+  m_PrefabInstance: {fileID: 1333298450334665344}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2246469810003469139 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 985658863290395091, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
