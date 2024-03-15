@@ -64,6 +64,11 @@ public class EnemyCharacter : Character
 
     }
 
+    public void RestartHP(int newValue)
+    {
+        _health.SetCurrent(newValue);
+    }
+
     public void SetMovement(in Vector3 position, in Vector3 velocity, in float avarageInterval)
     {
         targetPosition = position + (velocity*avarageInterval);

@@ -71,6 +71,10 @@ public class EnemyController : MonoBehaviour
         {
             switch (change.Field)
             {
+                case "curHp":
+                    if ((sbyte)change.Value > (sbyte)change.PreviousValue)
+                        _enemy.RestartHP((sbyte)change.Value);
+                    break;
                 case "pX":
                     position.x = (float)change.Value;
                     break;

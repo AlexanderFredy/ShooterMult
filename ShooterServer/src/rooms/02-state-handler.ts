@@ -2,6 +2,9 @@ import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema } from "@colyseus/schema";
 
 export class Player extends Schema {
+    @type("uint8")
+    loss = 0;
+
     @type("int8")
     maxHp = 0;
 
@@ -90,8 +93,28 @@ export class StateHandlerRoom extends Room<State> {
         });
 
         this.onMessage("damage", (client, data) => {
-            const player = this.state.players.get(data.id);
-            player.curHp -= data.value;
+            const clientID = data.id;
+            const player = this.state.players.get(clientID);
+
+            let hp = player.curHp - data.value;
+
+            if (hp > 0){
+                player.curHp = hp;
+                return;
+            }
+
+            player.loss++;
+            player.curHp = player.maxHp;
+
+            for(var i=0; i< this.clients.length; i++){
+                if(this.clients[i].id != clientID) continue;
+
+                const x = Math.floor(Math.random() * 50) - 25;
+                const z = Math.floor(Math.random() * 50) - 25;
+
+                const message = JSON.stringify({x,z});
+                this.clients[i].send("Restart",message);
+            }
         });
     }
 
