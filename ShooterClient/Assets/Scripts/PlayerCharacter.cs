@@ -1,10 +1,13 @@
 
+using Colyseus.Schema;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerCharacter : Character
-{   
+{
+    [SerializeField] private Health _health;
     [SerializeField] private Rigidbody _rigidbody;
     [SerializeField] private Transform _head;
     [SerializeField] private Transform _cameraPoint;
@@ -26,6 +29,9 @@ public class PlayerCharacter : Character
         camera.parent = _cameraPoint;
         camera.localPosition = Vector3.zero;
         camera.localRotation = Quaternion.identity;
+
+        _health.SetMax(maxHP);
+        _health.SetCurrent(maxHP);
     }
 
     public void SetInput(float h, float v, float rotateY)
@@ -84,4 +90,20 @@ public class PlayerCharacter : Character
 
     internal void SitDown() => Sit?.Invoke();
     internal void StandUp() => Stand?.Invoke();
+
+    internal void OnChange(List<DataChange> changes)
+    {
+        foreach (DataChange change in changes)
+        {
+            switch (change.Field)
+            {
+                case "curHp":
+                    _health.SetCurrent((sbyte)change.Value);
+                    break;
+                //default:
+                //    Debug.LogWarning("Dont use: " + change.Field);
+                //    break;
+            }
+        }
+    }
 }

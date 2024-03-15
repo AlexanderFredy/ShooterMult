@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class EnemyCharacter : Character
 {
+    private string _sessionID;
+
     [SerializeField] private Health _health;
     [SerializeField] private Transform _head;
     public Vector3 targetPosition { get; set; } = Vector3.zero;
@@ -14,6 +16,11 @@ public class EnemyCharacter : Character
     private float _velocityMagnitude = 0f;
     private float _angleVelocityMagnitudeY = 0f;
     private float shift = 0f;
+
+    public void Init(string sessionID)
+    {
+        _sessionID = sessionID;
+    }
 
     private void Start()
     {
@@ -82,5 +89,13 @@ public class EnemyCharacter : Character
     internal void ApplyDamage(int damage)
     {
         _health.ApplyDamage(damage);
+
+        Dictionary<string,object> data = new Dictionary<string, object>()
+        {
+            {"id", _sessionID },
+            {"value", damage }
+        };
+
+        MultiplayerManager.Instance.SendMessage("damage", data);
     }
 }
