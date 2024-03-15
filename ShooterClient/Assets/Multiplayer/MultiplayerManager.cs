@@ -6,6 +6,7 @@ using System;
 
 public class MultiplayerManager : ColyseusManager<MultiplayerManager>
 {
+    [field: SerializeField] public LossCounter _lossCounter {get; private set;}
     [SerializeField] PlayerCharacter _player;
     [SerializeField] EnemyController _enemy;
 

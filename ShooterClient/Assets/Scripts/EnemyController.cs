@@ -71,6 +71,9 @@ public class EnemyController : MonoBehaviour
         {
             switch (change.Field)
             {
+                case "loss":
+                    MultiplayerManager.Instance._lossCounter.SetEnemyLoss((byte)change.Value);
+                    break;
                 case "curHp":
                     if ((sbyte)change.Value > (sbyte)change.PreviousValue)
                         _enemy.RestartHP((sbyte)change.Value);

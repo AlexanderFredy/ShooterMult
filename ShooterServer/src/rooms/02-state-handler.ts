@@ -76,7 +76,7 @@ export class State extends Schema {
 }
 
 export class StateHandlerRoom extends Room<State> {
-    maxClients = 4;
+    maxClients = 2;
 
     onCreate (options) {
         console.log("StateHandlerRoom created!", options);
@@ -123,6 +123,7 @@ export class StateHandlerRoom extends Room<State> {
     }
 
     onJoin (client: Client, data:any) {
+        if (this.clients.length > 1) this.lock();
         client.send("hello", "world");
         this.state.createPlayer(client.sessionId, data);
     }
