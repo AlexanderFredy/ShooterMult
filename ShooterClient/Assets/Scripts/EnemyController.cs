@@ -42,6 +42,11 @@ public class EnemyController : MonoBehaviour
         _gun.Shoot(position,velocity);
     }
 
+    public void ChangeWeapon(in WeaponInfo info)
+    {
+        _gun.ChangeWeapon(info.num);
+    }
+
     public void Destroy()
     {
         _player.OnChange -= OnChange;

@@ -31,11 +31,12 @@ public class PlayerGun : Gun
         return true;
     }
 
-    //public void Shoot()
-    //{
-    //    Vector3 position = _bulletPoint.position;
-    //    Vector3 velocity = _bulletPoint.forward * _bulletSpeed;
-
-    //    Instantiate(_bulletPrefab, position, _bulletPoint.rotation).Init(velocity);
-    //}
+    public void SetCurrentWeapon(int damage, float bulletSpeed, float shootDelay, Bullet bulletPrefab, GameObject weapon)
+    {
+        _damage = damage;
+        _bulletSpeed = bulletSpeed;
+        _shootDelay = shootDelay;
+        _bulletPrefab = bulletPrefab;
+        _bulletPoint = weapon.transform.Find("BulletPoint");
+    }
 }
