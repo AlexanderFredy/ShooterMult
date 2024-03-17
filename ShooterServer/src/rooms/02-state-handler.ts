@@ -42,17 +42,32 @@ export class Player extends Schema {
     avY = 0;
 }
 
+class SpawnPoint{
+    @type("number")
+    pX = 0;
+
+    @type("number")
+    pY = 0;
+
+    constructor(x: number,y: number){
+        this.pX = x;
+        this.pY = y;
+    }
+} 
+
 export class State extends Schema {
     @type({ map: Player })
     players = new MapSchema<Player>();
 
     something = "This attribute won't be sent to the client-side";
 
-    createPlayer(sessionId: string, data:any) {
+    createPlayer(sessionId: string, data:any, sp:SpawnPoint) {
         const player = new Player();
         player.speed = data.speed;
         player.maxHp = data.hp;
         player.curHp = data.hp;
+        player.pX = sp.pX;
+        player.pZ = sp.pY;
 
         this.players.set(sessionId, player);
     }
@@ -77,6 +92,14 @@ export class State extends Schema {
 
 export class StateHandlerRoom extends Room<State> {
     maxClients = 2;
+
+    spawnPoints = new Map<SpawnPoint,string>();
+
+    constructor(){
+        super();
+        this.spawnPoints.set(new SpawnPoint(-25,-25),"");
+        this.spawnPoints.set(new SpawnPoint(25,25),"");
+    }
 
     onCreate (options) {
         console.log("StateHandlerRoom created!", options);
@@ -128,8 +151,19 @@ export class StateHandlerRoom extends Room<State> {
 
     onJoin (client: Client, data:any) {
         if (this.clients.length > 1) this.lock();
+
+        let sp = new SpawnPoint(0,0);
+        for (let [key, value] of this.spawnPoints.entries()) {
+            if (value == "")
+            {            
+                this.spawnPoints.set(key,client.sessionId);
+                sp = key;
+                //console.log(key, value);
+                break;    
+            }             
+        }
         client.send("hello", "world");
-        this.state.createPlayer(client.sessionId, data);
+        this.state.createPlayer(client.sessionId, data,sp);
     }
 
     onLeave (client) {
