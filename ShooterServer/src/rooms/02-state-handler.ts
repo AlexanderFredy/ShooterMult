@@ -136,8 +136,12 @@ export class StateHandlerRoom extends Room<State> {
             for(var i=0; i< this.clients.length; i++){
                 if(this.clients[i].id != clientID) continue;
 
-                const x = Math.floor(Math.random() * 50) - 25;
-                const z = Math.floor(Math.random() * 50) - 25;
+                //const x = Math.floor(Math.random() * 50) - 25;
+                //const z = Math.floor(Math.random() * 50) - 25;
+
+                const sp = this.GetMySpawnPoint(clientID);
+                const x = sp.pX;
+                const z = sp.pY;
 
                 const message = JSON.stringify({x,z});
                 this.clients[i].send("Restart",message);
@@ -151,17 +155,9 @@ export class StateHandlerRoom extends Room<State> {
 
     onJoin (client: Client, data:any) {
         if (this.clients.length > 1) this.lock();
+        
+        const sp = this.GetFreeSpawnPoint(client.sessionId);
 
-        let sp = new SpawnPoint(0,0);
-        for (let [key, value] of this.spawnPoints.entries()) {
-            if (value == "")
-            {            
-                this.spawnPoints.set(key,client.sessionId);
-                sp = key;
-                //console.log(key, value);
-                break;    
-            }             
-        }
         client.send("hello", "world");
         this.state.createPlayer(client.sessionId, data,sp);
     }
@@ -172,6 +168,33 @@ export class StateHandlerRoom extends Room<State> {
 
     onDispose () {
         console.log("Dispose StateHandlerRoom");
+    }
+
+    GetFreeSpawnPoint(id:any): SpawnPoint{
+        let sp = new SpawnPoint(0,0);
+        for (let [key, value] of this.spawnPoints.entries())
+         {
+            if (value == "")
+            {            
+                this.spawnPoints.set(key,id);
+                sp = key;
+                break;    
+            }          
+        }
+        return sp;
+    }
+
+    GetMySpawnPoint(id:any): SpawnPoint{
+        let sp = new SpawnPoint(0,0);
+        for (let [key, value] of this.spawnPoints.entries())
+        {
+            if (value == id)
+            {            
+                sp = key;
+                break;    
+            }          
+        }
+        return sp;
     }
 
 }
