@@ -21,4 +21,9 @@ public class GunAnimations : MonoBehaviour
     {
         _gun.shoot -= Shoot;
     }
+
+    public void SetGun(Gun gun)
+    {
+        _gun = gun;
+    }
 }

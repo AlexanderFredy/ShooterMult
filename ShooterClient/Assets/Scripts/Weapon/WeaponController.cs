@@ -41,6 +41,9 @@ public class WeaponController : MonoBehaviour
             _weaponArray[weaponNumber].bulletPrefab,
             _weaponModel);
 
+        if (_weaponModel.TryGetComponent(out GunAnimations anim))
+            anim.SetGun(_currentGun);
+
         SendChangeWeapon(weaponNumber);
     }
 

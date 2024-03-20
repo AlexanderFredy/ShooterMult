@@ -3,6 +3,9 @@ import { Schema, type, MapSchema } from "@colyseus/schema";
 
 export class Player extends Schema {
     @type("uint8")
+    skin = 0;
+    
+    @type("uint8")
     loss = 0;
 
     @type("int8")
@@ -15,13 +18,13 @@ export class Player extends Schema {
     speed = 0;
     
     @type("number")
-    pX = Math.floor(Math.random() * 50) - 25;
+    pX = 0;
 
     @type("number")
     pY = 0;
 
     @type("number")
-    pZ = Math.floor(Math.random() * 50) - 25;
+    pZ = 0;
 
     @type("number")
     vX = 0;
@@ -42,7 +45,7 @@ export class Player extends Schema {
     avY = 0;
 }
 
-class SpawnPoint{
+/* class SpawnPoint{
     @type("number")
     pX = 0;
 
@@ -53,7 +56,7 @@ class SpawnPoint{
         this.pX = x;
         this.pY = y;
     }
-} 
+}  */
 
 export class State extends Schema {
     @type({ map: Player })
@@ -61,13 +64,16 @@ export class State extends Schema {
 
     something = "This attribute won't be sent to the client-side";
 
-    createPlayer(sessionId: string, data:any, sp:SpawnPoint) {
+    createPlayer(sessionId: string, data:any, skin:number) {
         const player = new Player();
+        player.skin = skin;
         player.speed = data.speed;
         player.maxHp = data.hp;
         player.curHp = data.hp;
-        player.pX = sp.pX;
-        player.pZ = sp.pY;
+        player.pX = data.pX;
+        player.pY = data.pY;
+        player.pZ = data.pZ;
+        player.rY = data.rY;
 
         this.players.set(sessionId, player);
     }
@@ -92,16 +98,37 @@ export class State extends Schema {
 
 export class StateHandlerRoom extends Room<State> {
     maxClients = 2;
+    spawnPointsCount = 1;
+    skins: number[] = [0];
 
-    spawnPoints = new Map<SpawnPoint,string>();
+   /*  spawnPoints = new Map<SpawnPoint,string>();
 
     constructor(){
         super();
         this.spawnPoints.set(new SpawnPoint(-25,-25),"");
         this.spawnPoints.set(new SpawnPoint(25,25),"");
+    } */
+
+    mixArray(arr:any){
+        var currentIndex = arr.length;
+        var tempValue, randomIndex;
+
+        while (currentIndex !== 0){
+            randomIndex = Math.floor(Math.random()*currentIndex);
+            currentIndex -= 1;
+            tempValue = arr[currentIndex];
+            arr[currentIndex] = arr[randomIndex];
+            arr[randomIndex] = tempValue;
+        }
     }
 
     onCreate (options) {
+        for (var i = 1; i < options.skins; i++){
+            this.skins.push(i);
+        }
+        this.mixArray(this.skins);
+
+        this.spawnPointsCount = options.points;
         console.log("StateHandlerRoom created!", options);
 
         this.setState(new State());
@@ -136,15 +163,12 @@ export class StateHandlerRoom extends Room<State> {
             for(var i=0; i< this.clients.length; i++){
                 if(this.clients[i].id != clientID) continue;
 
-                //const x = Math.floor(Math.random() * 50) - 25;
-                //const z = Math.floor(Math.random() * 50) - 25;
+                const point = Math.floor(Math.random() * this.spawnPointsCount);
 
-                const sp = this.GetMySpawnPoint(clientID);
+                /* const sp = this.GetMySpawnPoint(clientID);
                 const x = sp.pX;
-                const z = sp.pY;
-
-                const message = JSON.stringify({x,z});
-                this.clients[i].send("Restart",message);
+                const z = sp.pY; */
+                this.clients[i].send("Restart",point);
             }
         });
     }
@@ -155,11 +179,11 @@ export class StateHandlerRoom extends Room<State> {
 
     onJoin (client: Client, data:any) {
         if (this.clients.length > 1) this.lock();
-        
-        const sp = this.GetFreeSpawnPoint(client.sessionId);
 
-        client.send("hello", "world");
-        this.state.createPlayer(client.sessionId, data,sp);
+        //const sp = this.GetFreeSpawnPoint(client.sessionId);
+
+        const skin = this.skins[this.clients.length-1];
+        this.state.createPlayer(client.sessionId, data, skin);
     }
 
     onLeave (client) {
@@ -170,7 +194,7 @@ export class StateHandlerRoom extends Room<State> {
         console.log("Dispose StateHandlerRoom");
     }
 
-    GetFreeSpawnPoint(id:any): SpawnPoint{
+    /* GetFreeSpawnPoint(id:any): SpawnPoint{
         let sp = new SpawnPoint(0,0);
         for (let [key, value] of this.spawnPoints.entries())
          {
@@ -195,6 +219,6 @@ export class StateHandlerRoom extends Room<State> {
             }          
         }
         return sp;
-    }
+    } */
 
 }

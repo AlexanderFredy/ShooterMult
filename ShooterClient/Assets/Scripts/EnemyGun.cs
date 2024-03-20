@@ -27,5 +27,8 @@ public class EnemyGun : Gun
         _weaponModel = Instantiate(_weaponArray[num].gunPrefab, _weaponHandler);
         _bulletPoint = _weaponModel.transform.Find("BulletPoint");
         _bulletPrefab = _weaponArray[num].bulletPrefab;
+
+        if (_weaponModel.TryGetComponent(out GunAnimations anim))
+            anim.SetGun(this);
     }
 }

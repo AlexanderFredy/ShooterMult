@@ -6,7 +6,9 @@ using System;
 
 public class MultiplayerManager : ColyseusManager<MultiplayerManager>
 {
-    [field: SerializeField] public LossCounter _lossCounter {get; private set;}
+    [SerializeField] Skins _skins;
+    [field: SerializeField] public LossCounter _lossCounter { get; private set; }
+    [field: SerializeField] public SpawnPoints _spawnPoints {get; private set;} 
     [SerializeField] PlayerCharacter _player;
     [SerializeField] EnemyController _enemy;
 
@@ -23,10 +25,18 @@ public class MultiplayerManager : ColyseusManager<MultiplayerManager>
 
     private async void Connect()
     {
+        _spawnPoints.GetPoint(UnityEngine.Random.Range(0, _spawnPoints.length), out Vector3 spawnPosition, out Vector3 spawnRotation);
+        
         Dictionary<string,object> data = new Dictionary<string, object>
         {
+            { "skins", _skins.length },
+            { "points", _spawnPoints.length },
             { "speed", _player.speed },
-            { "hp", _player.maxHP }
+            { "hp", _player.maxHP },
+            { "pX", spawnPosition.x },
+            { "pY", spawnPosition.y },
+            { "pZ", spawnPosition.z },
+            { "rY", spawnRotation.y }
         };
         
         _room = await Instance.client.JoinOrCreate<State>("state_handler",data);
@@ -81,10 +91,13 @@ public class MultiplayerManager : ColyseusManager<MultiplayerManager>
     {
         var position = new Vector3(player.pX, player.pY, player.pZ);
 
-        var PlayerCharacter = Instantiate(_player, position, Quaternion.identity);
+        Quaternion rotation = Quaternion.Euler(0,player.rY,0);
+        var PlayerCharacter = Instantiate(_player, position, rotation);
         player.OnChange += PlayerCharacter.OnChange;
 
-        _room.OnMessage<string>("Restart", PlayerCharacter.GetComponent<Controller>().Restart);
+        _room.OnMessage<int>("Restart", PlayerCharacter.GetComponent<Controller>().Restart);
+
+        PlayerCharacter.GetComponent<SetSkin>().Set(_skins.GetMaterial(player.skin));
     }
 
     private void CreateEnemy(string key, Player player)
@@ -93,6 +106,7 @@ public class MultiplayerManager : ColyseusManager<MultiplayerManager>
 
         var enemy = Instantiate(_enemy, position, Quaternion.identity);
         enemy.Init(key, player);
+        enemy.GetComponent<SetSkin>().Set(_skins.GetMaterial(player.skin));
 
         _enemies.Add(key, enemy);
     }

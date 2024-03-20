@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerGun : Gun
@@ -6,7 +7,16 @@ public class PlayerGun : Gun
     [SerializeField] private Transform _bulletPoint;
     [SerializeField] private float _bulletSpeed;
     [SerializeField] private float _shootDelay;
+
+    [Header("Aim")]
+    [SerializeField] private Transform _aimIndicator;
+    [SerializeField] private LayerMask _layerMask;
+    [SerializeField] private float maxDistance;
+    [SerializeField] private float _pointSize;
+
     private float _lastShootTime;
+    private Camera _camera;
+    private Vector3 _aimPoint;
 
     public bool TryShoot(out ShootInfo info)
     {
@@ -15,7 +25,8 @@ public class PlayerGun : Gun
         if (Time.time - _lastShootTime < _shootDelay) return false;
 
         Vector3 position = _bulletPoint.position;
-        Vector3 velocity = _bulletPoint.forward*_bulletSpeed;       
+        Vector3 direction = (_aimPoint - _bulletPoint.position).normalized;
+        Vector3 velocity = direction * _bulletSpeed;    
         
         _lastShootTime = Time.time;
         Instantiate( _bulletPrefab, position, _bulletPoint.rotation).Init(velocity, _damage);
@@ -39,4 +50,36 @@ public class PlayerGun : Gun
         _bulletPrefab = bulletPrefab;
         _bulletPoint = weapon.transform.Find("BulletPoint");
     }
+
+    private void Awake()
+    {
+        _camera = Camera.main;
+    }
+
+    private void Update()
+    {
+        Vector3 point = new Vector3(_camera.pixelWidth / 2, _camera.pixelHeight / 2, 0);
+        Ray ray = _camera.ScreenPointToRay(point);
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, ~_layerMask, QueryTriggerInteraction.Ignore))
+        {
+            _aimPoint = hit.point;
+            //_aimIndicator.position = hit.point;
+            //float distance = Vector3.Distance(point, hit.point);
+            //_aimIndicator.localScale = Vector3.one * _pointSize * distance;
+        }
+        else
+        {
+            _aimPoint = ray.GetPoint(maxDistance);
+            //_aimIndicator.position = hit.point;
+            //_aimIndicator.localScale = Vector3.one * _pointSize * maxDistance;
+        }      
+    }
+
+    void OnGUI()
+    {
+        int size = 12;
+        float posX = _camera.pixelWidth / 2 - size / 4;
+        float posY = _camera.pixelHeight / 2 - size / 2;
+        GUI.Label(new Rect(posX, posY, size, size), "X");
+}
 }

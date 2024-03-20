@@ -3,7 +3,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Controller : MonoBehaviour
 {
@@ -13,26 +12,49 @@ public class Controller : MonoBehaviour
     [SerializeField] private float _mouseSensetivity = 2f;
     private MultiplayerManager _multiplayerManager;
     private bool _hold = false; 
+    private bool _hideCurcor;
 
     private void Start()
     {
         _multiplayerManager = MultiplayerManager.Instance;
+        _hideCurcor = true;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
-        if (_hold) return;
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            _hideCurcor = !_hideCurcor;
+            Cursor.lockState = _hideCurcor ? CursorLockMode.Locked : CursorLockMode.None;
+        }
         
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+        if (_hold) return;
 
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
+        float h = 0;
+        float v = 0;
 
-        bool isShoot = Input.GetMouseButton(0);
-        bool jump = Input.GetKeyDown(KeyCode.Space);
-        bool sitdown = Input.GetKeyDown(KeyCode.LeftControl);
-        bool standUp = Input.GetKeyUp(KeyCode.LeftControl);
+        float mouseX = 0;
+        float mouseY = 0;
+        bool isShoot = false;
+
+        bool jump = false;
+        bool sitdown = false;
+        bool standUp = false;
+
+        if (_hideCurcor)
+        {
+            h = Input.GetAxisRaw("Horizontal");
+            v = Input.GetAxisRaw("Vertical");
+
+            mouseX = Input.GetAxis("Mouse X");
+            mouseY = Input.GetAxis("Mouse Y");
+            isShoot = Input.GetMouseButton(0);
+
+            jump = Input.GetKeyDown(KeyCode.Space);
+            sitdown = Input.GetKeyDown(KeyCode.LeftControl);
+            standUp = Input.GetKeyUp(KeyCode.LeftControl);
+        }     
 
         _player.SetInput(h, v, mouseX * _mouseSensetivity);
         _player.RotateX(-mouseY * _mouseSensetivity);
@@ -72,24 +94,27 @@ public class Controller : MonoBehaviour
         MultiplayerManager.Instance.SendMessage("move",data);
     }
 
-    public void Restart(string jsonRestartInfo)
+    public void Restart(int SpawnIndex)
     {
-        RestartInfo info = JsonUtility.FromJson<RestartInfo>(jsonRestartInfo);
+        _multiplayerManager._spawnPoints.GetPoint(SpawnIndex, out Vector3 position, out Vector3 rotation);
         StartCoroutine(Hold());
 
-        _player.transform.position = new Vector3(info.x, 0, info.z);
+        _player.transform.position = position;
+        rotation.x = 0;
+        rotation.z = 0;
+        _player.transform.eulerAngles = rotation;
         _player.SetInput(0, 0, 0);
 
         Dictionary<string, object> data = new Dictionary<string, object>()
         {
-            {"pX",info.x},
-            {"pY",0},
-            {"pZ",info.z},
+            {"pX",position.x},
+            {"pY",position.y},
+            {"pZ",position.z},
             {"vX",0},
             {"vY",0},
             {"vZ",0},
             {"rX",0},
-            {"rY",0},
+            {"rY",rotation.y},
             {"avY",0},
         };
         MultiplayerManager.Instance.SendMessage("move", data);
@@ -115,9 +140,3 @@ public struct ShootInfo
     public float dZ;
 }
 
-[System.Serializable]
-public struct RestartInfo
-{
-    public float x;
-    public float z;
-}

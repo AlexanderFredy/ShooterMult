@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damage: 1
   bulletPoint: {fileID: 0}
-  bulletSpeed: 50
+  bulletSpeed: 80
   shootDelay: 0.2
   gunPrefab: {fileID: 224904853944067741, guid: c5380bf0e77c7994c897b0acbe729f8c, type: 3}
   bulletPrefab: {fileID: 3694725372094413930, guid: a8f496187e59aae499d5146c905e8f4d, type: 3}
