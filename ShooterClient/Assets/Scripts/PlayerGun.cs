@@ -1,3 +1,5 @@
+using Sirenix.OdinInspector;
+using System;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -7,6 +9,8 @@ public class PlayerGun : Gun
     [SerializeField] private Transform _bulletPoint;
     [SerializeField] private float _bulletSpeed;
     [SerializeField] private float _shootDelay;
+    [SerializeField] private HeadShotLabel _headshotLablePrefab;
+    [SerializeField] private RectTransform _canvas;
 
     [Header("Aim")]
     [SerializeField] private Transform _aimIndicator;
@@ -29,7 +33,9 @@ public class PlayerGun : Gun
         Vector3 velocity = direction * _bulletSpeed;    
         
         _lastShootTime = Time.time;
-        Instantiate( _bulletPrefab, position, _bulletPoint.rotation).Init(velocity, _damage);
+        Bullet bul = Instantiate(_bulletPrefab, position, _bulletPoint.rotation);
+        bul.Init(velocity, _damage);
+        bul.headShot += ShowHeadShot; //не забьёт ли память???
         shoot?.Invoke();
 
         info.pX = position.x;
@@ -40,6 +46,12 @@ public class PlayerGun : Gun
         info.dZ = velocity.z;
 
         return true;
+    }
+
+    private void ShowHeadShot(Vector3 position)
+    {
+        var pos = Camera.main.WorldToScreenPoint(position) + new Vector3(0f, 40f);
+        Instantiate(_headshotLablePrefab, pos, Quaternion.identity, _canvas);
     }
 
     public void SetCurrentWeapon(int damage, float bulletSpeed, float shootDelay, Bullet bulletPrefab, GameObject weapon)

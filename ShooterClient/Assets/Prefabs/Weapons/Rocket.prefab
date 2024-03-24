@@ -60,7 +60,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!114 &1740193370665960268
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -75,6 +75,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _lifeTime: 5
   _rigidbody: {fileID: 5326720597050902375}
+  _damageType: 1
+  _explosionRadius: 20
+  _power: 100
+  _explosionEffectPrefab: {fileID: 841103968211181750, guid: 9549f509f128b43419f1f4b8520c9195, type: 3}
 --- !u!1 &6841055227879505532
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,7 +195,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0.2
+      scalar: 0.5
       minScalar: 5
       maxCurve:
         serializedVersion: 2
