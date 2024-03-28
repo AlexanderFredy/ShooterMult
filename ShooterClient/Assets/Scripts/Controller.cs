@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Controller : MonoBehaviour
 {
@@ -9,62 +10,84 @@ public class Controller : MonoBehaviour
     [SerializeField] private PlayerCharacter _player;
     [SerializeField] private PlayerGun _gun;
     [SerializeField] private float _mouseSensetivity = 2f;
+    [SerializeField] private RectTransform _inputRotationZone;
     private MultiplayerManager _multiplayerManager;
     private bool _hold = false; 
     private bool _hideCurcor;
+
+    private InputAction _moveAction;
+    private InputAction _lookAction;
+    private InputAction _shootAction;
+    private InputAction _jumpAction;
+
+    private Vector2 _moveInput = Vector2.zero;
+    private Vector2 _lookInput = Vector2.zero;
+    private bool _isShooting;
 
     private void Start()
     {
         _multiplayerManager = MultiplayerManager.Instance;
         _hideCurcor = true;
-        Cursor.lockState = CursorLockMode.Locked;
+        //Cursor.lockState = CursorLockMode.Locked;
+
+        _moveAction = new InputAction("move", binding: "Gamepad/rightStick");
+        _moveAction.AddCompositeBinding("Dpad")
+            .With("Up", "<Keyboard>/w")
+            .With("Down", "<Keyboard>/s")
+            .With("Left", "<Keyboard>/a")
+            .With("Right", "<Keyboard>/d");
+
+        _moveAction.performed += context => { _moveInput = context.ReadValue<Vector2>().normalized; };
+        _moveAction.canceled += context => { _moveInput = Vector2.zero; };
+        _moveAction.Enable();
+
+        _lookAction = new InputAction("look", binding: "<Mouse>/Delta");
+        _lookAction.AddBinding("<Touchscreen>/Delta");
+        _lookAction.performed += context => {
+            if (Input.touchCount > 0)
+            {
+                Touch touch = Input.GetTouch(0);
+                if (!RectTransformUtility.RectangleContainsScreenPoint(_inputRotationZone, touch.position))
+                    return;
+            }
+            
+            _lookInput = context.ReadValue<Vector2>().normalized;
+        };
+        _lookAction.canceled += context => { _lookInput = Vector2.zero; };
+        _lookAction.Enable();
+
+        _shootAction = new InputAction("shoot", binding: "<Mouse>/leftButton");
+        _shootAction.AddBinding("<Keyboard>/m");
+
+        _shootAction.performed += context => { _isShooting = true; };
+        _shootAction.canceled += context => { _isShooting = false; };
+        _shootAction.Enable();
+
+        _jumpAction = new InputAction("jump", binding: "<Keyboard>/Space");
+
+        _jumpAction.performed += context => { _player.Jump(); };
+        _jumpAction.Enable();
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            _hideCurcor = !_hideCurcor;
-            Cursor.lockState = _hideCurcor ? CursorLockMode.Locked : CursorLockMode.None;
-        }
-        
         if (_hold) return;
 
-        float h = 0;
-        float v = 0;
+        _player.SetInput(_moveInput.x, _moveInput.y, _lookInput.x * _mouseSensetivity);
+        _player.RotateX(-_lookInput.y * _mouseSensetivity);
 
-        float mouseX = 0;
-        float mouseY = 0;
-        bool isShoot = false;
+        if (_isShooting && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
 
-        bool jump = false;
-        bool sitdown = false;
-        bool standUp = false;
-
-        if (_hideCurcor)
-        {
-            h = Input.GetAxisRaw("Horizontal");
-            v = Input.GetAxisRaw("Vertical");
-
-            mouseX = Input.GetAxis("Mouse X");
-            mouseY = Input.GetAxis("Mouse Y");
-            isShoot = Input.GetMouseButton(0);
-
-            jump = Input.GetKeyDown(KeyCode.Space);
-            sitdown = Input.GetKeyDown(KeyCode.LeftControl);
-            standUp = Input.GetKeyUp(KeyCode.LeftControl);
-        }     
-
-        _player.SetInput(h, v, mouseX * _mouseSensetivity);
-        _player.RotateX(-mouseY * _mouseSensetivity);
-
-        if (jump && !sitdown) _player.Jump();
-        if (isShoot && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
-        
-        if (sitdown) _player.SitDown();
-        if (standUp) _player.StandUp();
+        //    //if (sitdown) _player.SitDown();
+        //    //if (standUp) _player.StandUp();
 
         SendMove();
+    }
+
+    private void PressEscape(InputAction.CallbackContext context)
+    {
+        _hideCurcor = !_hideCurcor;
+        Cursor.lockState = _hideCurcor ? CursorLockMode.Locked : CursorLockMode.None;
     }
 
     private void SendShoot(ref ShootInfo shootInfo)
@@ -124,6 +147,14 @@ public class Controller : MonoBehaviour
         _hold = true;
         yield return new WaitForSecondsRealtime(_restartDelay);
         _hold = false;
+    }
+
+    private void OnDestroy()
+    {
+        _moveAction.Disable();
+        _lookAction.Disable();
+        _shootAction.Disable(); 
+        _jumpAction.Disable();
     }
 }
 
