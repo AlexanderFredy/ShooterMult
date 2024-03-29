@@ -1,8 +1,9 @@
-using System;
+using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System;
 
 public class Controller : MonoBehaviour
 {
@@ -10,25 +11,67 @@ public class Controller : MonoBehaviour
     [SerializeField] private PlayerCharacter _player;
     [SerializeField] private PlayerGun _gun;
     [SerializeField] private float _mouseSensetivity = 2f;
-    [SerializeField] private RectTransform _inputRotationZone;
+    [SerializeField] private float _touchscreenSensetivity = 4f;
+    [SerializeField] private GameObject _touchbuttons;
+    [SerializeField] private RectTransform _lookRotateZone;
+    [SerializeField] private RectTransform _deadRatateZone;
+    [SerializeField] private TextMeshProUGUI _debugText;
+    [SerializeField] private WeaponController _weaponController;
+
     private MultiplayerManager _multiplayerManager;
     private bool _hold = false; 
     private bool _hideCurcor;
+
+    private float pointerSensetivity = 0f;
 
     private InputAction _moveAction;
     private InputAction _lookAction;
     private InputAction _shootAction;
     private InputAction _jumpAction;
+    private InputAction _escapeAction;
+    private InputAction _weaponChangeAction;
 
     private Vector2 _moveInput = Vector2.zero;
     private Vector2 _lookInput = Vector2.zero;
     private bool _isShooting;
+    private int _currentWeaponIndex = 0;
 
     private void Start()
     {
         _multiplayerManager = MultiplayerManager.Instance;
-        _hideCurcor = true;
-        //Cursor.lockState = CursorLockMode.Locked;
+
+        SetInputSystem();
+    }
+
+    void Update()
+    {
+        if (_hold) return;
+
+        _player.SetInput(_moveInput.x, _moveInput.y, _lookInput.x * pointerSensetivity);
+        _player.RotateX(-_lookInput.y * pointerSensetivity);
+
+        if (_isShooting && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
+
+        //    //if (sitdown) _player.SitDown();
+        //    //if (standUp) _player.StandUp();
+
+        SendMove();
+    }
+
+    private void SetInputSystem()
+    {
+        if (Application.isMobilePlatform)
+        {
+            pointerSensetivity = _touchscreenSensetivity;
+            _touchbuttons.SetActive(true);
+        }
+        else
+        {
+            pointerSensetivity = _mouseSensetivity;
+            _hideCurcor = true;
+            Cursor.lockState = CursorLockMode.Locked;
+            _touchbuttons.SetActive(false);
+        }
 
         _moveAction = new InputAction("move", binding: "Gamepad/rightStick");
         _moveAction.AddCompositeBinding("Dpad")
@@ -44,14 +87,22 @@ public class Controller : MonoBehaviour
         _lookAction = new InputAction("look", binding: "<Mouse>/Delta");
         _lookAction.AddBinding("<Touchscreen>/Delta");
         _lookAction.performed += context => {
-            if (Input.touchCount > 0)
+            if (Application.isMobilePlatform)
             {
-                Touch touch = Input.GetTouch(0);
-                if (!RectTransformUtility.RectangleContainsScreenPoint(_inputRotationZone, touch.position))
-                    return;
+                foreach (Touch touch in Input.touches)
+                {
+                    if (RectTransformUtility.RectangleContainsScreenPoint(_lookRotateZone, touch.position)
+                        && touch.phase == UnityEngine.TouchPhase.Moved
+                        && !RectTransformUtility.RectangleContainsScreenPoint(_deadRatateZone, touch.position))
+                    {
+                        _lookInput = touch.deltaPosition.normalized;
+                        break;
+                    }
+                }
+                //_debugText.text = _lookInput.ToString();
             }
-            
-            _lookInput = context.ReadValue<Vector2>().normalized;
+            else
+                _lookInput = context.ReadValue<Vector2>().normalized;
         };
         _lookAction.canceled += context => { _lookInput = Vector2.zero; };
         _lookAction.Enable();
@@ -67,25 +118,20 @@ public class Controller : MonoBehaviour
 
         _jumpAction.performed += context => { _player.Jump(); };
         _jumpAction.Enable();
+
+        _weaponChangeAction = new InputAction("weapon_change", binding: "<Keyboard>/b");
+        _weaponChangeAction.performed += context => { WeaponCircleChange(); };
+        _weaponChangeAction.Enable();
+
+        _escapeAction = new InputAction("escape", binding: "<Keyboard>/Escape");
+
+        _escapeAction.started += context => { PressEscape(); };
+        _escapeAction.Enable();
     }
 
-    void Update()
+    private void PressEscape()
     {
-        if (_hold) return;
-
-        _player.SetInput(_moveInput.x, _moveInput.y, _lookInput.x * _mouseSensetivity);
-        _player.RotateX(-_lookInput.y * _mouseSensetivity);
-
-        if (_isShooting && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
-
-        //    //if (sitdown) _player.SitDown();
-        //    //if (standUp) _player.StandUp();
-
-        SendMove();
-    }
-
-    private void PressEscape(InputAction.CallbackContext context)
-    {
+        _hold = !_hold;
         _hideCurcor = !_hideCurcor;
         Cursor.lockState = _hideCurcor ? CursorLockMode.Locked : CursorLockMode.None;
     }
@@ -96,6 +142,14 @@ public class Controller : MonoBehaviour
         string json = JsonUtility.ToJson(shootInfo);
 
         _multiplayerManager.SendMessage("shoot",json);
+    }
+
+    private void WeaponCircleChange()
+    {
+        _currentWeaponIndex++;
+        if (_currentWeaponIndex > 2) _currentWeaponIndex = 0;
+
+        _weaponController.SetWeaponFromInventory(_currentWeaponIndex);
     }
 
     private void SendMove()

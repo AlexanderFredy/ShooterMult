@@ -28,7 +28,7 @@ public class WeaponController : MonoBehaviour
             SetWeaponFromInventory(weaponNumber);
     }
 
-    private void SetWeaponFromInventory(int weaponNumber)
+    public void SetWeaponFromInventory(int weaponNumber)
     {
         if (_weaponModel != null) Destroy(_weaponModel);
 

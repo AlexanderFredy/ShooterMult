@@ -41,10 +41,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Metallic: 0.138
+    - _Metallic: 0
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _Smoothness: 0.404
+    - _Smoothness: 0
     - _Tile: 0.3
     m_Colors:
     - _Color: {r: 0.4998754, g: 0.588609, b: 0.6509434, a: 1}
