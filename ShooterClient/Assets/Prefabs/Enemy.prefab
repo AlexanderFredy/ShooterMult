@@ -110,8 +110,10 @@ MonoBehaviour:
   _checkFly: {fileID: 4461341251379501729}
   _animator: {fileID: 1281234319815858159}
   _character: {fileID: 564217681193103131}
-  _seatOffset: 1
+  _seatOffset: 0.4
   _seatSpeed: 1
+  _enemyHealthIndicator: {fileID: 9212785475106886344}
+  _enemyHealthIndicatorOffset: 1
 --- !u!114 &4461341251379501729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -508,6 +510,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 7
       objectReference: {fileID: 0}
+    - target: {fileID: 7438243359608588766, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7647427568600618671, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
       propertyPath: m_Layer
       value: 7
@@ -739,5 +745,10 @@ SphereCollider:
 --- !u!23 &9069615696200536433 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 7059552776166667275, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
+  m_PrefabInstance: {fileID: 2028078561954260346}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &9212785475106886344 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7205562732781877170, guid: 5b9e5150db7b2204d98b5f69a683d1e6, type: 3}
   m_PrefabInstance: {fileID: 2028078561954260346}
   m_PrefabAsset: {fileID: 0}

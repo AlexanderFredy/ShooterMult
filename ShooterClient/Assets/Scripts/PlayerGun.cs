@@ -1,6 +1,4 @@
-using Sirenix.OdinInspector;
-using System;
-using Unity.VisualScripting;
+using UnityEngine.UI;
 using UnityEngine;
 
 public class PlayerGun : Gun
@@ -17,10 +15,12 @@ public class PlayerGun : Gun
     [SerializeField] private LayerMask _layerMask;
     [SerializeField] private float maxDistance;
     [SerializeField] private float _pointSize;
+    [SerializeField] private Image _sniperAim;
 
     private float _lastShootTime;
     private Camera _camera;
     private Vector3 _aimPoint;
+    private bool isZoom = false;
 
     public bool TryShoot(out ShootInfo info)
     {
@@ -46,6 +46,31 @@ public class PlayerGun : Gun
         info.dZ = velocity.z;
 
         return true;
+    }
+
+    public bool EnableAltShoot()
+    {
+        if (_sniperAim == null)
+        {
+            return false;
+        }
+
+        isZoom = !isZoom;
+
+        if (isZoom)
+        {
+            _sniperAim.gameObject.SetActive(true);
+            _camera.fieldOfView = 10;
+
+            return true;
+        }
+        else
+        {
+            _sniperAim.gameObject.SetActive(false);
+            _camera.fieldOfView = 60;
+
+            return false;
+        }        
     }
 
     private void ShowHeadShot(Vector3 position)

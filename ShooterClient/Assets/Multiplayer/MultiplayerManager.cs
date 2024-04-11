@@ -8,7 +8,8 @@ public class MultiplayerManager : ColyseusManager<MultiplayerManager>
 {
     [SerializeField] Skins _skins;
     [field: SerializeField] public LossCounter _lossCounter { get; private set; }
-    [field: SerializeField] public SpawnPoints _spawnPoints {get; private set;} 
+    [field: SerializeField] public SpawnPoints _spawnPoints {get; private set;}
+
     [SerializeField] PlayerCharacter _player;
     [SerializeField] EnemyController _enemy;
 
@@ -45,6 +46,8 @@ public class MultiplayerManager : ColyseusManager<MultiplayerManager>
 
         _room.OnMessage<string>("Shoot",ApplyShoot);
         _room.OnMessage<string>("Change_Weapon", ChangeWeapon);
+        _room.OnMessage<string>("Sit", SitEnemy);
+        _room.OnMessage<string>("Stand", StandEnemy);
     }
 
     private void ApplyShoot(string jsonShootInfo)
@@ -69,6 +72,22 @@ public class MultiplayerManager : ColyseusManager<MultiplayerManager>
         }
 
         _enemies[wpInfo.key].ChangeWeapon(wpInfo);
+    }
+
+    private void SitEnemy(string playerID)
+    {
+        if (_enemies.ContainsKey(playerID))
+        {
+            _enemies[playerID].SitDown();
+        }
+    }
+
+    private void StandEnemy(string playerID)
+    {
+        if (_enemies.ContainsKey(playerID))
+        {
+            _enemies[playerID].StandUp();
+        }
     }
 
     private void OnChange(State state, bool isFirstState)

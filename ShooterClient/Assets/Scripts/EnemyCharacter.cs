@@ -1,7 +1,4 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using Unity.Burst.CompilerServices;
 using UnityEngine;
 
 public class EnemyCharacter : Character
@@ -53,6 +50,9 @@ public class EnemyCharacter : Character
         }
 
     }
+
+    internal void SitDown() => Sit?.Invoke();
+    internal void StandUp() => Stand?.Invoke();
 
     public void SetSpeed(float value) => speed = value;
 

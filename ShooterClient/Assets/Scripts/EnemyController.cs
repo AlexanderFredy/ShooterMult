@@ -47,6 +47,9 @@ public class EnemyController : MonoBehaviour
         _gun.ChangeWeapon(info.num);
     }
 
+    internal void SitDown() => _enemy.SitDown();
+    internal void StandUp() => _enemy.StandUp();
+
     public void Destroy()
     {
         _player.OnChange -= OnChange;

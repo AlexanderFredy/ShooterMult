@@ -4,10 +4,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using GameDevWare.Serialization;
 
 public class Controller : MonoBehaviour
 {
     [SerializeField] private float _restartDelay = 3f;
+    [SerializeField] private Joystick variableJoystick;
     [SerializeField] private PlayerCharacter _player;
     [SerializeField] private PlayerGun _gun;
     [SerializeField] private float _mouseSensetivity = 2f;
@@ -17,6 +19,8 @@ public class Controller : MonoBehaviour
     [SerializeField] private RectTransform _deadRatateZone;
     [SerializeField] private TextMeshProUGUI _debugText;
     [SerializeField] private WeaponController _weaponController;
+    [SerializeField] private CharacterAnimation _characterAnimation;
+    [SerializeField] private RectTransform _sitStandButton;
 
     private MultiplayerManager _multiplayerManager;
     private bool _hold = false; 
@@ -24,16 +28,14 @@ public class Controller : MonoBehaviour
 
     private float pointerSensetivity = 0f;
 
-    private InputAction _moveAction;
-    private InputAction _lookAction;
-    private InputAction _shootAction;
-    private InputAction _jumpAction;
-    private InputAction _escapeAction;
-    private InputAction _weaponChangeAction;
-
     private Vector2 _moveInput = Vector2.zero;
     private Vector2 _lookInput = Vector2.zero;
-    private bool _isShooting;
+    private bool _shootInput;
+    private bool _altShootInput;
+    private bool _jumpInput;
+    private bool _sitStandInput;
+    private bool _standState = true;
+    private sbyte _standDirection = 0;
     private int _currentWeaponIndex = 0;
 
     private void Start()
@@ -41,19 +43,87 @@ public class Controller : MonoBehaviour
         _multiplayerManager = MultiplayerManager.Instance;
 
         SetInputSystem();
+
+        _characterAnimation.IsStand += () => { _standState = true; _standDirection = 0; };
     }
 
     void Update()
     {
         if (_hold) return;
 
+        if (Application.isMobilePlatform)
+        {
+            _moveInput = variableJoystick.Direction;
+            _lookInput = Vector2.zero;
+
+            foreach (Touch touch in Input.touches)
+            {
+                if (RectTransformUtility.RectangleContainsScreenPoint(_lookRotateZone, touch.position)
+                    && !RectTransformUtility.RectangleContainsScreenPoint(_deadRatateZone, touch.position)
+                    && touch.phase == UnityEngine.TouchPhase.Moved)
+                {
+                    _lookInput = touch.deltaPosition.normalized;
+                    break;
+                }
+            }
+            //_debugText.text = _lookInput.ToString();
+        }
+        else
+        {
+            _moveInput.x = Input.GetAxisRaw("Horizontal");
+            _moveInput.y = Input.GetAxisRaw("Vertical");
+
+            _lookInput.x = Input.GetAxis("Mouse X");
+            _lookInput.y = Input.GetAxis("Mouse Y");
+
+            _shootInput = Input.GetMouseButton(0);
+            _altShootInput = Input.GetMouseButtonDown(1);
+            _jumpInput = Input.GetKeyDown(KeyCode.Space);
+            _sitStandInput = Input.GetKeyDown(KeyCode.LeftControl);
+            //if (Input.GetKeyDown(KeyCode.Escape)) PressEscape();
+        }
+
         _player.SetInput(_moveInput.x, _moveInput.y, _lookInput.x * pointerSensetivity);
         _player.RotateX(-_lookInput.y * pointerSensetivity);
 
-        if (_isShooting && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
+        if (_jumpInput && _standState)
+        {
+            _player.Jump();
+            _jumpInput = false;
+        }
+        if (_shootInput && _gun.TryShoot(out ShootInfo shootInfo)) SendShoot(ref shootInfo);
+        if (_altShootInput)
+        {
+            if (_gun.EnableAltShoot())
+            {
+                if (Application.isMobilePlatform)
+                    pointerSensetivity /= 8f;
+            } else
+            {
+                if (Application.isMobilePlatform)
+                    pointerSensetivity *= 8f;
+            }
 
-        //    //if (sitdown) _player.SitDown();
-        //    //if (standUp) _player.StandUp();
+            _altShootInput = false;
+        }
+
+        if (_sitStandInput)
+        {
+            if (_standState)
+            {
+                _player.SitDown();
+                _standState = false;
+                SendSitStart();
+            }
+            else
+            {
+                _player.StandUp();
+                SendStandStart();
+            }
+            _sitStandInput = false;
+        }
+
+        _sitStandButton.eulerAngles = _standState ? new Vector3(0, 0, -180) : Vector3.zero; 
 
         SendMove();
     }
@@ -71,62 +141,41 @@ public class Controller : MonoBehaviour
             _hideCurcor = true;
             Cursor.lockState = CursorLockMode.Locked;
             _touchbuttons.SetActive(false);
+
         }
+    }
 
-        _moveAction = new InputAction("move", binding: "Gamepad/rightStick");
-        _moveAction.AddCompositeBinding("Dpad")
-            .With("Up", "<Keyboard>/w")
-            .With("Down", "<Keyboard>/s")
-            .With("Left", "<Keyboard>/a")
-            .With("Right", "<Keyboard>/d");
+    public void PressJump()
+    {
+        _jumpInput = true;
+    }
 
-        _moveAction.performed += context => { _moveInput = context.ReadValue<Vector2>().normalized; };
-        _moveAction.canceled += context => { _moveInput = Vector2.zero; };
-        _moveAction.Enable();
+    public void PressDownShoot()
+    {
+        _shootInput = true;
+    }
 
-        _lookAction = new InputAction("look", binding: "<Mouse>/Delta");
-        _lookAction.AddBinding("<Touchscreen>/Delta");
-        _lookAction.performed += context => {
-            if (Application.isMobilePlatform)
-            {
-                foreach (Touch touch in Input.touches)
-                {
-                    if (RectTransformUtility.RectangleContainsScreenPoint(_lookRotateZone, touch.position)
-                        && touch.phase == UnityEngine.TouchPhase.Moved
-                        && !RectTransformUtility.RectangleContainsScreenPoint(_deadRatateZone, touch.position))
-                    {
-                        _lookInput = touch.deltaPosition.normalized;
-                        break;
-                    }
-                }
-                //_debugText.text = _lookInput.ToString();
-            }
-            else
-                _lookInput = context.ReadValue<Vector2>().normalized;
-        };
-        _lookAction.canceled += context => { _lookInput = Vector2.zero; };
-        _lookAction.Enable();
+    public void PressUpShoot()
+    {
+        _shootInput = false;
+    }
 
-        _shootAction = new InputAction("shoot", binding: "<Mouse>/leftButton");
-        _shootAction.AddBinding("<Keyboard>/m");
+    public void PressSitStand()
+    {
+        _sitStandInput = true;
+    }
 
-        _shootAction.performed += context => { _isShooting = true; };
-        _shootAction.canceled += context => { _isShooting = false; };
-        _shootAction.Enable();
+    public void PressAltShoot()
+    {
+        _altShootInput = true;
+    }
 
-        _jumpAction = new InputAction("jump", binding: "<Keyboard>/Space");
+    public void WeaponCircleChange()
+    {
+        _currentWeaponIndex++;
+        if (_currentWeaponIndex > 2) _currentWeaponIndex = 0;
 
-        _jumpAction.performed += context => { _player.Jump(); };
-        _jumpAction.Enable();
-
-        _weaponChangeAction = new InputAction("weapon_change", binding: "<Keyboard>/b");
-        _weaponChangeAction.performed += context => { WeaponCircleChange(); };
-        _weaponChangeAction.Enable();
-
-        _escapeAction = new InputAction("escape", binding: "<Keyboard>/Escape");
-
-        _escapeAction.started += context => { PressEscape(); };
-        _escapeAction.Enable();
+        _weaponController.SetWeaponFromInventory(_currentWeaponIndex);
     }
 
     private void PressEscape()
@@ -144,12 +193,24 @@ public class Controller : MonoBehaviour
         _multiplayerManager.SendMessage("shoot",json);
     }
 
-    private void WeaponCircleChange()
+    private void SendSitStart()
     {
-        _currentWeaponIndex++;
-        if (_currentWeaponIndex > 2) _currentWeaponIndex = 0;
+        Dictionary<string, object> data = new Dictionary<string, object>()
+        {
+            {"id",_multiplayerManager.GetSessionId()},
+        };
+        
+        _multiplayerManager.SendMessage("sit", data);
+    }
 
-        _weaponController.SetWeaponFromInventory(_currentWeaponIndex);
+    private void SendStandStart()
+    {
+        Dictionary<string, object> data = new Dictionary<string, object>()
+        {
+            {"id",_multiplayerManager.GetSessionId()},
+        };
+
+        _multiplayerManager.SendMessage("stand", data);
     }
 
     private void SendMove()
@@ -157,6 +218,7 @@ public class Controller : MonoBehaviour
         _player.GetMoveInfo(out Vector3 position, out Vector3 velocity, out float rotateX, out float rotateY, out float angVelocityY);
         Dictionary<string, object> data = new Dictionary<string, object>()
         {
+            {"standDir",_standDirection},
             {"pX",position.x},
             {"pY",position.y},
             {"pZ",position.z},
@@ -205,10 +267,7 @@ public class Controller : MonoBehaviour
 
     private void OnDestroy()
     {
-        _moveAction.Disable();
-        _lookAction.Disable();
-        _shootAction.Disable(); 
-        _jumpAction.Disable();
+        _characterAnimation.IsStand -= () => { _standState = true; _standDirection = 0; };
     }
 }
 

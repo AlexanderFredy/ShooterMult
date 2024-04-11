@@ -13,6 +13,12 @@ public class CharacterAnimation : MonoBehaviour
     [SerializeField] private Character _character;
     [SerializeField] private float _seatOffset = 1f;
     [SerializeField] private float _seatSpeed = 1f;
+    [SerializeField] private RectTransform _enemyHealthIndicator;
+    [SerializeField] private float _enemyHealthIndicatorOffset = 1f;
+
+
+    public Action IsStand;
+    public Action IsSit;
 
     private bool _sitDirection;
     private float _curSitDepth = 0f;
@@ -55,12 +61,7 @@ public class CharacterAnimation : MonoBehaviour
         _sitStandCoroutineIsWorking = true;
 
         while (_sitStandCoroutineIsWorking)
-        {
-            if (_curSitDepth > 0 || _curSitDepth < -_seatOffset)
-            {
-                _sitStandCoroutineIsWorking = false;
-            }
-
+        {          
             if (_sitDirection)
                 _curSitDepth += _seatSpeed * Time.deltaTime;
             else
@@ -70,10 +71,26 @@ public class CharacterAnimation : MonoBehaviour
 
             var locPos = startBodyPosition;
             locPos.z += _curSitDepth;
-            _character._body.localPosition = locPos;           
+            _character._body.localPosition = locPos;
+
+            if (_enemyHealthIndicator)
+            {
+                locPos = _enemyHealthIndicator.localPosition;
+                var shift = _enemyHealthIndicatorOffset*(_curSitDepth/ startBodyPosition.z);
+                locPos.y += Mathf.Clamp(shift, -_enemyHealthIndicatorOffset, 0);
+                _enemyHealthIndicator.localPosition = locPos;
+            }
 
             yield return null;
+
+            if (_curSitDepth >= 0 || _curSitDepth <= -_seatOffset)
+            {
+                _sitStandCoroutineIsWorking = false;
+            }
         }
+      
+        if (_curSitDepth >= 0) IsStand?.Invoke();
+        if (_curSitDepth <= -_seatOffset) IsSit?.Invoke();
     }
 
     private void OnDestroy()

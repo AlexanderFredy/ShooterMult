@@ -136,10 +136,23 @@ export class StateHandlerRoom extends Room<State> {
         this.onMessage("move", (client, data) => {
             //console.log("StateHandlerRoom received message from", client.sessionId, ":", data);
             this.state.movePlayer(client.sessionId, data);
+
+             //упал за карту
+            const player = this.state.players.get(client.sessionId);
+            if (player.pY < -100)
+                this.RestartOnNewSpawnPoint(client.sessionId);
         });
 
         this.onMessage("shoot", (client, data) => {
             this.broadcast("Shoot",data,{except: client});
+        });
+
+        this.onMessage("sit", (client, data) => {
+            this.broadcast("Sit",data.id,{except: client});
+        });
+
+        this.onMessage("stand", (client, data) => {
+            this.broadcast("Stand",data.id,{except: client});
         });
 
         this.onMessage("change_weapon", (client, data) => {
@@ -158,18 +171,7 @@ export class StateHandlerRoom extends Room<State> {
             }
 
             player.loss++;
-            player.curHp = player.maxHp;
-
-            for(var i=0; i< this.clients.length; i++){
-                if(this.clients[i].id != clientID) continue;
-
-                const point = Math.floor(Math.random() * this.spawnPointsCount);
-
-                /* const sp = this.GetMySpawnPoint(clientID);
-                const x = sp.pX;
-                const z = sp.pY; */
-                this.clients[i].send("Restart",point);
-            }
+            this.RestartOnNewSpawnPoint(clientID);
         });
     }
 
@@ -192,6 +194,23 @@ export class StateHandlerRoom extends Room<State> {
 
     onDispose () {
         console.log("Dispose StateHandlerRoom");
+    }
+
+    RestartOnNewSpawnPoint(clientID: string){
+            
+        const player = this.state.players.get(clientID);
+        player.curHp = player.maxHp;
+
+        for(var i=0; i< this.clients.length; i++){
+            if(this.clients[i].id != clientID) continue;
+
+            const point = Math.floor(Math.random() * this.spawnPointsCount);
+
+            /* const sp = this.GetMySpawnPoint(clientID);
+            const x = sp.pX;
+            const z = sp.pY; */
+            this.clients[i].send("Restart",point);
+        }
     }
 
     /* GetFreeSpawnPoint(id:any): SpawnPoint{
